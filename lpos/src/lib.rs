@@ -453,10 +453,10 @@ pub mod pallet {
 	/// The map from nominator stash key to the set of stash keys of all validators to nominate.
 	///
 	/// When updating this storage item, you must also update the `CounterForNominators`.
-	#[pallet::storage]
+/*	#[pallet::storage]
 	#[pallet::getter(fn nominators)]
 	pub type Nominators<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, Nominations<T::AccountId>>;
+		StorageMap<_, Twox64Concat, T::AccountId, Nominations<T::AccountId>>;*/
 
 	/// The current era index.
 	///
@@ -620,10 +620,10 @@ pub mod pallet {
 					StakerStatus::Validator => {
 						<Pallet<T>>::bond_and_validate(controller.clone(), balance)
 					}
-					StakerStatus::Nominator(votes) => <Pallet<T>>::nominate(
-						controller.clone(),
-						votes.iter().map(|l| T::Lookup::unlookup(l.clone())).collect(),
-					),
+					// StakerStatus::Nominator(votes) => <Pallet<T>>::nominate(
+					// 	controller.clone(),
+					// 	votes.iter().map(|l| T::Lookup::unlookup(l.clone())).collect(),
+					// ),
 					_ => Ok(()),
 				};
 			}
@@ -939,7 +939,7 @@ pub mod pallet {
 		/// - Writes: Bonded, Slashing Spans (if S > 0), Ledger, Payee, Validators, Nominators, Stash Account, Locks
 		/// - Writes Each: SpanSlash * S
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::reap_stash(*num_slashing_spans))]
+/*		#[pallet::weight(T::WeightInfo::reap_stash(*num_slashing_spans))]
 		pub fn reap_stash(
 			_origin: OriginFor<T>,
 			stash: T::AccountId,
@@ -950,7 +950,7 @@ pub mod pallet {
 			// Self::kill_stash(&stash, num_slashing_spans)?;
 			// T::Currency::remove_lock(STAKING_ID, &stash);
 			Ok(())
-		}
+		}*/
 
 		/// Remove the given nominations from the calling validator.
 		///
@@ -1076,7 +1076,8 @@ impl<T: Config> Pallet<T> {
 
 		<Ledger<T>>::insert(&controller, value);
 		Self::deposit_event(Event::<T>::Bonded(controller.clone(), value));
-		Self::validate(controller, prefs)
+		// Self::validate(controller, prefs)
+		Ok(())
 	}
 
 	/// Declare the desire to validate for the origin controller.
@@ -1096,11 +1097,11 @@ impl<T: Config> Pallet<T> {
 	/// - Read: Era Election Status, Ledger
 	/// - Write: Nominators, Validators
 	/// # </weight>
-	pub fn validate(controller: T::AccountId, prefs: ValidatorPrefs) -> DispatchResult {
+/*	pub fn validate(controller: T::AccountId, prefs: ValidatorPrefs) -> DispatchResult {
 		Self::do_remove_nominator(&controller);
 		Self::do_add_validator(&controller, prefs);
 		Ok(())
-	}
+	}*/
 
 	/// Declare the desire to nominate `targets` for the origin controller.
 	///
@@ -1121,7 +1122,7 @@ impl<T: Config> Pallet<T> {
 	/// - Reads: Era Election Status, Ledger, Current Era
 	/// - Writes: Validators, Nominators
 	/// # </weight>
-	pub fn nominate(
+/*	pub fn nominate(
 		controller: T::AccountId,
 		targets: Vec<<T::Lookup as StaticLookup>::Source>,
 	) -> DispatchResult {
@@ -1153,7 +1154,7 @@ impl<T: Config> Pallet<T> {
 		Self::do_remove_validator(&controller);
 		Self::do_add_nominator(&controller, nominations);
 		Ok(())
-	}
+	}*/
 
 	fn do_payout_stakers(controller: T::AccountId, era: EraIndex) -> DispatchResultWithPostInfo {
 		// Validate input data
@@ -1261,8 +1262,8 @@ impl<T: Config> Pallet<T> {
 
 	/// Chill a stash account.
 	fn chill_stash(stash: &T::AccountId) {
-		Self::do_remove_validator(stash);
-		Self::do_remove_nominator(stash);
+		// Self::do_remove_validator(stash);
+		// Self::do_remove_nominator(stash);
 	}
 
 	/// Actually make a payment to a staker. This uses the currency's reward function
@@ -1579,8 +1580,8 @@ impl<T: Config> Pallet<T> {
 		<Ledger<T>>::remove(&controller);
 
 		<Payee<T>>::remove(controller);
-		Self::do_remove_validator(controller);
-		Self::do_remove_nominator(controller);
+		// Self::do_remove_validator(controller);
+		// Self::do_remove_nominator(controller);
 
 		// frame_system::Pallet::<T>::dec_consumers(stash);
 
@@ -1641,17 +1642,17 @@ impl<T: Config> Pallet<T> {
 	/// and keep track of the `CounterForNominators`.
 	///
 	/// If the nominator already exists, their nominations will be updated.
-	pub fn do_add_nominator(who: &T::AccountId, nominations: Nominations<T::AccountId>) {
+/*	pub fn do_add_nominator(who: &T::AccountId, nominations: Nominations<T::AccountId>) {
 		Nominators::<T>::insert(who, nominations);
-	}
+	}*/
 
 	/// This function will remove a nominator from the `Nominators` storage map,
 	/// and keep track of the `CounterForNominators`.
-	pub fn do_remove_nominator(who: &T::AccountId) {
+/*	pub fn do_remove_nominator(who: &T::AccountId) {
 		if Nominators::<T>::contains_key(who) {
 			Nominators::<T>::remove(who);
 		}
-	}
+	}*/
 
 	/// This function will add a validator to the `Validators` storage map,
 	/// and keep track of the `CounterForValidators`.
