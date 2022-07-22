@@ -291,6 +291,7 @@ pub struct ObservationsPayload<Public, BlockNumber, AccountId> {
 	public: Public,
 	block_number: BlockNumber,
 	observations: Vec<Observation<AccountId>>,
+	key_data: Vec<u8>,
 }
 
 impl<T: SigningTypes> SignedPayload<T>
@@ -685,8 +686,14 @@ pub mod pallet {
 
 			// Only communicate with mainchain if we are validators.
 			match Self::get_validator_id() {
-				Some((public, validator_id)) => {
-					log!(debug, "public: {:?}, validator_id: {:?}", public, validator_id);
+				Some((public, validator_id, key_data)) => {
+					log!(
+						debug,
+						"public: {:?}, validator_id: {:?}: key_data: {:?}",
+						public,
+						validator_id,
+						key_data
+					);
 
 					let mainchain_rpc_endpoint = Self::get_mainchain_rpc_endpoint(
 						anchor_contract[anchor_contract.len() - 1] == 116,
@@ -699,6 +706,7 @@ pub mod pallet {
 						anchor_contract,
 						public,
 						validator_id,
+						key_data,
 					) {
 						log!(warn, "observing_mainchain: Error: {}", e);
 					}
@@ -796,7 +804,8 @@ pub mod pallet {
 			// This ensures that the function can only be called via unsigned transaction.
 			ensure_none(origin)?;
 			let who = payload.public.clone().into_account();
-			let val_id = T::LposInterface::is_active_validator(
+
+			let mut val_id = T::LposInterface::is_active_validator(
 				KEY_TYPE,
 				&payload.public.clone().into_account().encode(),
 			);
@@ -807,7 +816,10 @@ pub mod pallet {
 					"Not a validator in current validator set: {:?}",
 					payload.public.clone().into_account()
 				);
-				return Err(Error::<T>::NotValidator.into())
+				val_id = T::LposInterface::is_active_validator(KEY_TYPE, &payload.key_data);
+				if val_id.is_none() {
+					return Err(Error::<T>::NotValidator.into())
+				}
 			}
 			let val_id = val_id.expect("Validator is valid; qed").clone();
 
@@ -1175,14 +1187,20 @@ pub mod pallet {
 			}
 		}
 
-		fn get_validator_id() -> Option<(<T as SigningTypes>::Public, T::AccountId)> {
+		fn get_validator_id() -> Option<(<T as SigningTypes>::Public, T::AccountId, Vec<u8>)> {
 			for key in <T::AppCrypto as AppCrypto<
 				<T as SigningTypes>::Public,
 				<T as SigningTypes>::Signature,
 			>>::RuntimeAppPublic::all()
 			.into_iter()
 			{
+				log!(
+					warn,
+					"++++++++++++++++++++++++++++++++++++++++++++++++++++++, local key = {:?}",
+					key.to_raw_vec().clone()
+				);
 				log!(trace, "local key: {:?}", key.to_raw_vec());
+				let key_data = key.to_raw_vec();
 
 				let val_id = T::LposInterface::is_active_validator(KEY_TYPE, &key.to_raw_vec());
 				let generic_public = <T::AppCrypto as AppCrypto<
@@ -1195,7 +1213,8 @@ pub mod pallet {
 				if val_id.is_none() {
 					continue
 				}
-				return Some((public, val_id.unwrap()))
+				log!(warn, "++++++++++++++++++++++++++++++++++++++++++++++++++++++, is validator");
+				return Some((public, val_id.unwrap(), key_data))
 			}
 			None
 		}
@@ -1206,6 +1225,7 @@ pub mod pallet {
 			anchor_contract: Vec<u8>,
 			public: <T as SigningTypes>::Public,
 			_validator_id: T::AccountId,
+			key_data: Vec<u8>,
 		) -> Result<(), &'static str> {
 			let mut obs: Vec<Observation<<T as frame_system::Config>::AccountId>>;
 			let next_notification_id = NextNotificationId::<T>::get();
@@ -1274,16 +1294,22 @@ pub mod pallet {
 				return Ok(())
 			}
 
-			let result = Signer::<T, T::AppCrypto>::all_accounts()
-				.with_filter(vec![public])
-				.send_unsigned_transaction(
-					|account| ObservationsPayload {
-						public: account.public.clone(),
-						block_number,
-						observations: obs.clone(),
-					},
-					|payload, signature| Call::submit_observations { payload, signature },
-				);
+			// let result = Signer::<T, T::AppCrypto>::all_accounts()
+			let sig = Signer::<T, T::AppCrypto>::all_accounts().with_filter(vec![public]);
+			if !(sig.can_sign()) {
+				log!(warn, "Err, no signer found when submit challenge.");
+			}
+			log!(debug, "Can sign ++++++++++++++++++++++++++++++++++ ");
+
+			let result = sig.send_unsigned_transaction(
+				|account| ObservationsPayload {
+					public: account.public.clone(),
+					block_number,
+					observations: obs.clone(),
+					key_data: key_data.clone(),
+				},
+				|payload, signature| Call::submit_observations { payload, signature },
+			);
 			if result.len() != 1 {
 				return Err("No account found")
 			}
