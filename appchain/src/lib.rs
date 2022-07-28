@@ -938,6 +938,8 @@ pub mod pallet {
 			receiver_id: Vec<u8>,
 			amount: T::AssetBalance,
 		) -> DispatchResultWithPostInfo {
+			println!("burn_asset ++++++++++++++++++++++++++ asset_id: {:?}, receiver_id: {:?}, amount: {:?}", asset_id, receiver_id, amount);
+			
 			let sender = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
