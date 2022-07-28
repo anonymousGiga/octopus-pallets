@@ -881,6 +881,7 @@ pub mod pallet {
 			receiver_id: Vec<u8>,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
+			println!("++++++++++++++++++++++++++++++++++++++++++++ in lock");
 			let who = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
