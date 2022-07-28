@@ -1031,6 +1031,7 @@ pub mod pallet {
 			instance: T::InstanceId,
 			receiver_id: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
+			println!("++++++++++++++++++++++++++ class: {:?}, instance: {:?}, receiver_id: {:?}", class, instance, receiver_id);
 			let who = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
