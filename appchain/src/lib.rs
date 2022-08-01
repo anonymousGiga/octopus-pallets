@@ -882,7 +882,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			// println!("++++++++++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
-			log!(info, "️️️lock ++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
+			log!(warn, "️️️lock ++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
 
 			//let who = ensure_signed(origin)?;
 			//ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
