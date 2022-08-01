@@ -881,7 +881,9 @@ pub mod pallet {
 			receiver_id: Vec<u8>,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			println!("++++++++++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
+			// println!("++++++++++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
+			log!(info, "️️️lock ++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
+
 			//let who = ensure_signed(origin)?;
 			//ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
@@ -938,7 +940,7 @@ pub mod pallet {
 			receiver_id: Vec<u8>,
 			amount: T::AssetBalance,
 		) -> DispatchResultWithPostInfo {
-			println!("burn_asset ++++++++++++++++++++++++++ asset_id: {:?}, receiver_id: {:?}, amount: {:?}", asset_id, receiver_id, amount);
+			// println!("burn_asset ++++++++++++++++++++++++++ asset_id: {:?}, receiver_id: {:?}, amount: {:?}", asset_id, receiver_id, amount);
 			
 			let sender = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
@@ -1031,7 +1033,7 @@ pub mod pallet {
 			instance: T::InstanceId,
 			receiver_id: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			println!("++++++++++++++++++++++++++ class: {:?}, instance: {:?}, receiver_id: {:?}", class, instance, receiver_id);
+			// println!("++++++++++++++++++++++++++ class: {:?}, instance: {:?}, receiver_id: {:?}", class, instance, receiver_id);
 			let who = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
