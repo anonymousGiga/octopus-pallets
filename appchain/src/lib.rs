@@ -882,35 +882,35 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			println!("++++++++++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
-			let who = ensure_signed(origin)?;
-			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
+			//let who = ensure_signed(origin)?;
+			//ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
-			let receiver_id =
-				String::from_utf8(receiver_id).map_err(|_| Error::<T>::InvalidReceiverId)?;
+			//let receiver_id =
+			//	String::from_utf8(receiver_id).map_err(|_| Error::<T>::InvalidReceiverId)?;
 
-			let amount_wrapped: u128 = amount.checked_into().ok_or(Error::<T>::AmountOverflow)?;
+			//let amount_wrapped: u128 = amount.checked_into().ok_or(Error::<T>::AmountOverflow)?;
 
-			T::Currency::transfer(&who, &Self::account_id(), amount, AllowDeath)?;
+			//T::Currency::transfer(&who, &Self::account_id(), amount, AllowDeath)?;
 
-			let prefix = String::from("0x");
-			let hex_sender = prefix + &hex::encode(who.encode());
-			let message = LockPayload {
-				sender: hex_sender.clone(),
-				receiver_id: receiver_id.clone(),
-				amount: amount_wrapped,
-			};
+			//let prefix = String::from("0x");
+			//let hex_sender = prefix + &hex::encode(who.encode());
+			//let message = LockPayload {
+			//	sender: hex_sender.clone(),
+			//	receiver_id: receiver_id.clone(),
+			//	amount: amount_wrapped,
+			//};
 
-			let sequence = T::UpwardMessagesInterface::submit(
-				Some(who.clone()),
-				PayloadType::Lock,
-				&message.try_to_vec().unwrap(),
-			)?;
-			Self::deposit_event(Event::Locked {
-				sender: who,
-				receiver: receiver_id.as_bytes().to_vec(),
-				amount,
-				sequence,
-			});
+			//let sequence = T::UpwardMessagesInterface::submit(
+			//	Some(who.clone()),
+			//	PayloadType::Lock,
+			//	&message.try_to_vec().unwrap(),
+			//)?;
+			//Self::deposit_event(Event::Locked {
+			//	sender: who,
+			//	receiver: receiver_id.as_bytes().to_vec(),
+			//	amount,
+			//	sequence,
+			//});
 
 			Ok(().into())
 		}
