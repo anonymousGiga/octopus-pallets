@@ -942,41 +942,43 @@ pub mod pallet {
 			amount: T::AssetBalance,
 		) -> DispatchResultWithPostInfo {
 			// println!("burn_asset ++++++++++++++++++++++++++ asset_id: {:?}, receiver_id: {:?}, amount: {:?}", asset_id, receiver_id, amount);
+			log!(warn, "️️️burn asset ++++++++++++++++++ amount: {:?}, asset_id: {:?}, receiver_id: {:?}", amount, asset_id, receiver_id);
 			
-			let sender = ensure_signed(origin)?;
-			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
+			// let sender = ensure_signed(origin)?;
+			// ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
-			let receiver_id =
-				String::from_utf8(receiver_id).map_err(|_| Error::<T>::InvalidReceiverId)?;
+			// let receiver_id =
+			// 	String::from_utf8(receiver_id).map_err(|_| Error::<T>::InvalidReceiverId)?;
 
-			let token_id = T::AssetIdByTokenId::try_get_token_id(asset_id)
-				.map_err(|_| Error::<T>::NoAssetId)?;
+			// let token_id = T::AssetIdByTokenId::try_get_token_id(asset_id)
+			// 	.map_err(|_| Error::<T>::NoAssetId)?;
 
-			let token_id = String::from_utf8(token_id).map_err(|_| Error::<T>::InvalidTokenId)?;
+			// let token_id = String::from_utf8(token_id).map_err(|_| Error::<T>::InvalidTokenId)?;
 
-			<T::Assets as fungibles::Mutate<T::AccountId>>::burn_from(asset_id, &sender, amount)?;
+			// <T::Assets as fungibles::Mutate<T::AccountId>>::burn_from(asset_id, &sender, amount)?;
 
-			let prefix = String::from("0x");
-			let hex_sender = prefix + &hex::encode(sender.encode());
-			let message = BurnAssetPayload {
-				token_id,
-				sender: hex_sender,
-				receiver_id: receiver_id.clone(),
-				amount: amount.into(),
-			};
+			// let prefix = String::from("0x");
+			// let hex_sender = prefix + &hex::encode(sender.encode());
+			// let message = BurnAssetPayload {
+			// 	token_id,
+			// 	sender: hex_sender,
+			// 	receiver_id: receiver_id.clone(),
+			// 	amount: amount.into(),
+			// };
 
-			let sequence = T::UpwardMessagesInterface::submit(
-				Some(sender.clone()),
-				PayloadType::BurnAsset,
-				&message.try_to_vec().unwrap(),
-			)?;
-			Self::deposit_event(Event::AssetBurned {
-				asset_id,
-				sender,
-				receiver: receiver_id.as_bytes().to_vec(),
-				amount,
-				sequence,
-			});
+			// let sequence = T::UpwardMessagesInterface::submit(
+			// 	Some(sender.clone()),
+			// 	PayloadType::BurnAsset,
+			// 	&message.try_to_vec().unwrap(),
+			// )?;
+			// Self::deposit_event(Event::AssetBurned {
+			// 	asset_id,
+			// 	sender,
+			// 	receiver: receiver_id.as_bytes().to_vec(),
+			// 	amount,
+			// 	sequence,
+			// });
+			log!(warn, "️️️burn asset end ||||||||||||| ++++++++++++++++++ ");
 
 			Ok(().into())
 		}
