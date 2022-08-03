@@ -1201,11 +1201,7 @@ pub mod pallet {
 			>>::RuntimeAppPublic::all()
 			.into_iter()
 			{
-				log!(
-					warn,
-					"++++++++++++++++++++++++++++++++++++++++++++++++++++++, local key = {:?}",
-					key.to_raw_vec().clone()
-				);
+				log!(debug, "local key = {:?}", key.to_raw_vec().clone());
 				log!(trace, "local key: {:?}", key.to_raw_vec());
 				let key_data = key.to_raw_vec();
 
@@ -1220,7 +1216,6 @@ pub mod pallet {
 				if val_id.is_none() {
 					continue
 				}
-				log!(warn, "++++++++++++++++++++++++++++++++++++++++++++++++++++++, is validator");
 				return Some((public, val_id.unwrap(), key_data))
 			}
 			None
@@ -1301,22 +1296,17 @@ pub mod pallet {
 				return Ok(())
 			}
 
-			// let result = Signer::<T, T::AppCrypto>::all_accounts()
-			let sig = Signer::<T, T::AppCrypto>::all_accounts().with_filter(vec![public]);
-			if !(sig.can_sign()) {
-				log!(warn, "Err, no signer found when submit challenge.");
-			}
-			log!(debug, "Can sign ++++++++++++++++++++++++++++++++++ ");
-
-			let result = sig.send_unsigned_transaction(
-				|account| ObservationsPayload {
-					public: account.public.clone(),
-					block_number,
-					observations: obs.clone(),
-					key_data: key_data.clone(),
-				},
-				|payload, signature| Call::submit_observations { payload, signature },
-			);
+			let result = Signer::<T, T::AppCrypto>::all_accounts()
+				.with_filter(vec![public])
+				.send_unsigned_transaction(
+					|account| ObservationsPayload {
+						public: account.public.clone(),
+						block_number,
+						observations: obs.clone(),
+						key_data: key_data.clone(),
+					},
+					|payload, signature| Call::submit_observations { payload, signature },
+				);
 			if result.len() != 1 {
 				return Err("No account found")
 			}
