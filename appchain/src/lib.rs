@@ -408,8 +408,17 @@ pub mod pallet {
 		#[pallet::constant]
 		type UnsignedPriority: Get<TransactionPriority>;
 
+		/// A configuration for limit of request notification.
+		///
+		/// This is the limits for request notification histories.
 		#[pallet::constant]
 		type RequestEventLimit: Get<u32>;
+
+		/// A configuration for chain type.
+		///
+		/// This is parameter should be true when it is a evm chain.
+		#[pallet::constant]
+		type IsEvmChain: Get<bool>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -805,21 +814,19 @@ pub mod pallet {
 			ensure_none(origin)?;
 			let who = payload.public.clone().into_account();
 
-			let mut val_id = T::LposInterface::is_active_validator(
-				KEY_TYPE,
-				&payload.public.clone().into_account().encode(),
-			);
+			let key_data = {
+				if T::IsEvmChain::get() {
+					payload.key_data
+				} else {
+					payload.public.clone().into_account().encode()
+				}
+			};
+
+			let val_id = T::LposInterface::is_active_validator(KEY_TYPE, &key_data);
 
 			if val_id.is_none() {
-				log!(
-					warn,
-					"Not a validator in current validator set: {:?}",
-					payload.public.clone().into_account()
-				);
-				val_id = T::LposInterface::is_active_validator(KEY_TYPE, &payload.key_data);
-				if val_id.is_none() {
-					return Err(Error::<T>::NotValidator.into())
-				}
+				log!(warn, "Not a validator in current validator set, key_data: {:?}", key_data);
+				return Err(Error::<T>::NotValidator.into())
 			}
 			let val_id = val_id.expect("Validator is valid; qed").clone();
 
@@ -881,9 +888,6 @@ pub mod pallet {
 			receiver_id: Vec<u8>,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			// println!("++++++++++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
-			log!(warn, "️️️lock ++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
-
 			let who = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
@@ -913,7 +917,6 @@ pub mod pallet {
 				amount,
 				sequence,
 			});
-			log!(warn, "️️️finish ++++++++++++++++++++++ amount: {:?}, receiver_id: {:?}", amount, receiver_id);
 
 			Ok(().into())
 		}
@@ -941,9 +944,6 @@ pub mod pallet {
 			receiver_id: Vec<u8>,
 			amount: T::AssetBalance,
 		) -> DispatchResultWithPostInfo {
-			// println!("burn_asset ++++++++++++++++++++++++++ asset_id: {:?}, receiver_id: {:?}, amount: {:?}", asset_id, receiver_id, amount);
-			log!(warn, "️️️burn asset ++++++++++++++++++ amount: {:?}, asset_id: {:?}, receiver_id: {:?}", amount, asset_id, receiver_id);
-			
 			let sender = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
@@ -978,7 +978,6 @@ pub mod pallet {
 				amount,
 				sequence,
 			});
-			log!(warn, "️️️burn asset end ||||||||||||| ++++++++++++++++++ ");
 
 			Ok(().into())
 		}
@@ -1036,8 +1035,6 @@ pub mod pallet {
 			instance: T::InstanceId,
 			receiver_id: Vec<u8>,
 		) -> DispatchResultWithPostInfo {
-			// println!("++++++++++++++++++++++++++ class: {:?}, instance: {:?}, receiver_id: {:?}", class, instance, receiver_id);
-			log!(warn, "️️️lock nft ++++++++++++++++++ class: {:?}, instance: {:?}, receiver_id: {:?}", class, instance, receiver_id);
 			let who = ensure_signed(origin)?;
 			ensure!(IsActivated::<T>::get(), Error::<T>::NotActivated);
 
