@@ -291,7 +291,7 @@ pub struct ObservationsPayload<Public, BlockNumber, AccountId> {
 	public: Public,
 	block_number: BlockNumber,
 	observations: Vec<Observation<AccountId>>,
-	key_data: Vec<u8>,
+	raw_key: Vec<u8>,
 }
 
 impl<T: SigningTypes> SignedPayload<T>
@@ -414,11 +414,11 @@ pub mod pallet {
 		#[pallet::constant]
 		type RequestEventLimit: Get<u32>;
 
-		/// A configuration for chain type.
-		///
-		/// This is parameter should be true when it is a evm chain.
-		#[pallet::constant]
-		type IsEvmChain: Get<bool>;
+		// /// A configuration for chain type.
+		// ///
+		// /// This is parameter should be true when it is a evm chain.
+		// #[pallet::constant]
+		// type IsEvmChain: Get<bool>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -695,13 +695,13 @@ pub mod pallet {
 
 			// Only communicate with mainchain if we are validators.
 			match Self::get_validator_id() {
-				Some((public, validator_id, key_data)) => {
+				Some((public, validator_id, raw_key)) => {
 					log!(
 						debug,
-						"public: {:?}, validator_id: {:?}: key_data: {:?}",
+						"public: {:?}, validator_id: {:?}, raw_key: {:?}",
 						public,
 						validator_id,
-						key_data
+						raw_key,
 					);
 
 					let mainchain_rpc_endpoint = Self::get_mainchain_rpc_endpoint(
@@ -715,7 +715,7 @@ pub mod pallet {
 						anchor_contract,
 						public,
 						validator_id,
-						key_data,
+						raw_key,
 					) {
 						log!(warn, "observing_mainchain: Error: {}", e);
 					}
@@ -814,18 +814,14 @@ pub mod pallet {
 			ensure_none(origin)?;
 			let who = payload.public.clone().into_account();
 
-			let key_data = {
-				if T::IsEvmChain::get() {
-					payload.key_data
-				} else {
-					payload.public.clone().into_account().encode()
-				}
-			};
-
-			let val_id = T::LposInterface::is_active_validator(KEY_TYPE, &key_data);
+			let val_id = T::LposInterface::is_active_validator(KEY_TYPE, &payload.raw_key);
 
 			if val_id.is_none() {
-				log!(warn, "Not a validator in current validator set, key_data: {:?}", key_data);
+				log!(
+					warn,
+					"Not a validator in current validator set, key_data: {:?}",
+					payload.raw_key
+				);
 				return Err(Error::<T>::NotValidator.into())
 			}
 			let val_id = val_id.expect("Validator is valid; qed").clone();
@@ -1201,9 +1197,8 @@ pub mod pallet {
 			>>::RuntimeAppPublic::all()
 			.into_iter()
 			{
-				log!(debug, "local key = {:?}", key.to_raw_vec().clone());
 				log!(trace, "local key: {:?}", key.to_raw_vec());
-				let key_data = key.to_raw_vec();
+				let raw_key = key.to_raw_vec();
 
 				let val_id = T::LposInterface::is_active_validator(KEY_TYPE, &key.to_raw_vec());
 				let generic_public = <T::AppCrypto as AppCrypto<
@@ -1216,7 +1211,7 @@ pub mod pallet {
 				if val_id.is_none() {
 					continue
 				}
-				return Some((public, val_id.unwrap(), key_data))
+				return Some((public, val_id.unwrap(), raw_key))
 			}
 			None
 		}
@@ -1227,7 +1222,7 @@ pub mod pallet {
 			anchor_contract: Vec<u8>,
 			public: <T as SigningTypes>::Public,
 			_validator_id: T::AccountId,
-			key_data: Vec<u8>,
+			raw_key: Vec<u8>,
 		) -> Result<(), &'static str> {
 			let mut obs: Vec<Observation<<T as frame_system::Config>::AccountId>>;
 			let next_notification_id = NextNotificationId::<T>::get();
@@ -1303,7 +1298,7 @@ pub mod pallet {
 						public: account.public.clone(),
 						block_number,
 						observations: obs.clone(),
-						key_data: key_data.clone(),
+						raw_key: raw_key.clone(),
 					},
 					|payload, signature| Call::submit_observations { payload, signature },
 				);
